@@ -16,50 +16,28 @@
  */
 package net.lr.simplecluster.example;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import net.lr.simplecluster.FailoverHandler;
 
-import org.apache.camel.CamelContext;
 import org.apache.camel.Consumer;
-import org.apache.camel.Endpoint;
+import org.apache.camel.Exchange;
 import org.apache.camel.Route;
-import org.apache.camel.SuspendableService;
+import org.apache.camel.spi.RoutePolicy;
 import org.apache.camel.util.ServiceHelper;
-import org.springframework.beans.factory.InitializingBean;
 
-public class RouteFailoverHandler implements FailoverHandler {
+public class FailoverRoutePolicy implements FailoverHandler, RoutePolicy {
 
-    CamelContext context;
     String routeIds;
+    Set<Consumer> consumers = new HashSet<Consumer>();
 
-
-    public RouteFailoverHandler(CamelContext context) {
-        this.context = context;
-    }
-
-    public void setRouteIds(String routeIds) {
-        this.routeIds = routeIds;
-    }
-
-    public List<Consumer> getConsumers() {
-        List<Consumer> endpoints = new ArrayList<Consumer>();
-        String[] endpointIdAr = routeIds.split(",");
-        for (String id : endpointIdAr) {
-            Route route = context.getRoute(id);
-            if (route == null) {
-                throw new RuntimeException("Route with id " + id + " not found");
-            }
-            Consumer consumer = route.getConsumer();
-            endpoints.add(consumer);
-        }
-        return endpoints;
+    public FailoverRoutePolicy() {
     }
 
     @Override
     public void start() {
-        List<Consumer> consumers = getConsumers();
         try {
             ServiceHelper.startServices(consumers);
             ServiceHelper.resumeServices(consumers);
@@ -69,11 +47,25 @@ public class RouteFailoverHandler implements FailoverHandler {
 
     @Override
     public void stop() {
-        List<Consumer> consumers = getConsumers();
         try {
             ServiceHelper.suspendServices(consumers);
         } catch (Exception e) {
         }
     }
+
+	@Override
+	public void onInit(Route route) {
+		consumers.add(route.getConsumer());
+	}
+
+	@Override
+	public void onExchangeBegin(Route route, Exchange exchange) {
+		// Do not interfere with exchanges
+	}
+
+	@Override
+	public void onExchangeDone(Route route, Exchange exchange) {
+		// Do not interfere with exchanges
+	}
 
 }

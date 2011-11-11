@@ -17,12 +17,7 @@
 package net.lr.simplecluster.example;
 
 import org.apache.camel.builder.RouteBuilder;
-import org.apache.camel.component.jms.JmsComponent;
-import org.apache.camel.component.jms.JmsConfiguration;
-import org.apache.camel.component.timer.TimerConsumer;
 import org.apache.camel.spring.Main;
-
-import static org.apache.camel.builder.xml.XPathBuilder.xpath;
 
 /**
  * A Camel Router
@@ -41,6 +36,6 @@ public class ClusterTestRouteBuilder extends RouteBuilder {
      */
     public void configure() {
         from("timer:simple?period=5000").filter().method("lockManager", "isActive").to("log:test");
-        from("file:target/test").routeId("myjpa").noAutoStartup().to("log:test2");
+        from("file:target/test").noAutoStartup().routePolicyRef("failoverPolicy").to("log:test2");
     }
 }

@@ -40,12 +40,10 @@
 
 	<bean id="lockManager" class="net.lr.simplecluster.DbLockManager" init-method="start" destroy-method="stop">
 		<property name="dataSource" ref="dataSource" />
-		<property name="handler" ref="handler" />
+		<property name="handler" ref="failoverPolicy" />
 	</bean>
 	
-	<bean id="handler" class="net.lr.simplecluster.example.RouteFailoverHandler">
-		<constructor-arg ref="camelContext" />
-		<property name="routeIds" value="myjpa"/>
+	<bean id="failoverPolicy" class="net.lr.simplecluster.example.FailoverRoutePolicy">
 	</bean>
 
 	<camelContext id="camelContext" xmlns="http://camel.apache.org/schema/spring">
